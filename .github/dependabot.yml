@@ -3,17 +3,15 @@ updates:
 - package-ecosystem: npm
   directory: "/"
   schedule:
-    interval: daily
+    interval: weekly
     time: "03:00"
   commit-message:
-      # Prefix all commit messages with "npm"
-      prefix: "chore"
+      prefix: "chore(npm)"
 - package-ecosystem: github-actions
   directory: "/"
   schedule:
     interval: weekly
     time: "04:00"
   commit-message:
-      # Prefix all commit messages with "npm"
-      prefix: "chore"
+      prefix: "chore(github-actions)"
   open-pull-requests-limit: 10

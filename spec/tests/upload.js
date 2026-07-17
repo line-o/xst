@@ -1,5 +1,5 @@
 import { test } from 'tape'
-import { run, asAdmin } from '../test.js'
+import { run, asAdmin, testServer } from '../test.js'
 
 const testCollection = '/db/upload-test'
 
@@ -41,7 +41,7 @@ test('uploading files and folders', function (t) {
     const { stderr, stdout, code } = await run('xst', ['up', '-v', 'spec/test.js', testCollection])
     st.equal(code, 1, 'exit code 1')
     const lines = stderr.split('\n')
-    st.equal(lines[0], 'Connecting to https://localhost:8443 as guest', lines[0])
+    st.equal(lines[0], `Connecting to ${testServer} as guest`, lines[0])
     st.equal(lines[1], '✘ test.js Error: Write permission is not granted on the Collection.', lines[1])
     st.ok(/Upload of .+?spec\/test\.js failed\./.test(lines[2]), lines[2])
     st.ok(stdout, 'additional info is displayed')
@@ -72,7 +72,7 @@ test('uploading files and folders', function (t) {
     const { stderr, stdout, code } = await run('xst', ['up', '-v', 'spec/fixtures/test.xq', testCollection])
     st.equal(code, 1, 'exit code 1')
     const lines = stderr.split('\n')
-    st.equal(lines[0], 'Connecting to https://localhost:8443 as guest', lines[0])
+    st.equal(lines[0], `Connecting to ${testServer} as guest`, lines[0])
     st.equal(lines[1], '✘ test.xq Error: A resource with the same name already exists in the target collection \'/db/upload-test\', and you do not have write access on that resource.')
     st.ok(/Upload of .+?spec\/fixtures\/test\.xq failed\./.test(lines[2]))
     st.ok(stdout, 'additional info is displayed')

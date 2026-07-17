@@ -1,8 +1,45 @@
 import { spawn } from 'node:child_process'
+import { fileURLToPath } from 'node:url'
 
 /**
  * @typedef {Promise<{stderr?: string, stdout?: string, code: number}>} CommandResult
  */
+
+// ---------------------------------------------------------------------------
+// Test target resolution
+//
+// The suite always tests the CLI of THIS checkout by spawning
+// `node <checkout>/cli.js` — never a globally installed or npm-linked xst.
+// This makes `npm test` safe in git worktrees: each worktree tests its own
+// code. Set XST_TEST_BIN to test a packaged binary instead (e.g. ./xst-linux).
+// ---------------------------------------------------------------------------
+const cliPath = fileURLToPath(new URL('../cli.js', import.meta.url))
+const testBin = process.env.XST_TEST_BIN
+
+function resolveXst (cmd, args = []) {
+  if (cmd !== 'xst') { return [cmd, args] }
+  if (testBin) { return [testBin, args] }
+  return [process.execPath, [cliPath, ...args]]
+}
+
+// ---------------------------------------------------------------------------
+// Test server resolution
+//
+// Defaults match CI: an eXist-db instance with its HTTPS/HTTP ports published
+// on localhost:8443/8080. To run the suite against an isolated instance (e.g.
+// per-worktree containers on other ports) set
+//
+//   XST_TEST_SERVER=https://localhost:11291 \
+//   XST_TEST_HTTP_SERVER=http://localhost:10291 npm test
+//
+// When XST_TEST_SERVER is set it is injected as EXISTDB_SERVER into every
+// spawned process; suites that specifically test connection *defaults*
+// (spec/tests/configuration.js) skip themselves in that case.
+// ---------------------------------------------------------------------------
+export const isIsolated = Boolean(process.env.XST_TEST_SERVER)
+export const testServer = process.env.XST_TEST_SERVER || 'https://localhost:8443'
+export const testHttpServer = process.env.XST_TEST_HTTP_SERVER || 'http://localhost:8080'
+const serverEnv = isIsolated ? { EXISTDB_SERVER: testServer } : {}
 
 /**
  * Run an shell command
@@ -13,10 +50,11 @@ import { spawn } from 'node:child_process'
  * @returns {CommandResult} The result of running the command
  */
 export async function run (cmd, args, options = cleanEnv) {
+  const [command, commandArgs] = resolveXst(cmd, args)
   return new Promise((resolve, reject) => {
     let stderr
     let stdout
-    const proc = spawn(cmd, args, options)
+    const proc = spawn(command, commandArgs, options)
     proc.stdout.on('data', (data) => {
       stdout ? (stdout += data.toString()) : (stdout = data.toString())
     })
@@ -45,11 +83,13 @@ export async function run (cmd, args, options = cleanEnv) {
  * @returns {CommandResult} The result of the pipe
  */
 export async function runPipe (cmd1, args1, cmd2, args2, options = cleanEnv) {
+  const [command1, commandArgs1] = resolveXst(cmd1, args1)
+  const [command2, commandArgs2] = resolveXst(cmd2, args2)
   return new Promise((resolve, reject) => {
     let stderr
     let stdout
-    const proc1 = spawn(cmd1, args1, options)
-    const proc2 = spawn(cmd2, args2, options)
+    const proc1 = spawn(command1, commandArgs1, options)
+    const proc2 = spawn(command2, commandArgs2, options)
     proc1.stdout.pipe(proc2.stdin)
 
     proc2.stdout.on('data', (data) => {
@@ -68,14 +108,14 @@ export async function runPipe (cmd1, args1, cmd2, args2, options = cleanEnv) {
 // guard test execution against environment variables in development setups
 const { EXISTDB_PASS, EXISTDB_USER, EXISTDB_SERVER, ...filteredEnv } = process.env
 export const cleanEnv = {
-  env: filteredEnv
+  env: { ...filteredEnv, ...serverEnv }
 }
 export const asGuest = {
-  env: { ...filteredEnv, EXISTDB_USER: 'guest', EXISTDB_PASS: 'guest' }
+  env: { ...filteredEnv, ...serverEnv, EXISTDB_USER: 'guest', EXISTDB_PASS: 'guest' }
 }
 export const asAdmin = {
-  env: { ...filteredEnv, EXISTDB_USER: 'admin', EXISTDB_PASS: '' }
+  env: { ...filteredEnv, ...serverEnv, EXISTDB_USER: 'admin', EXISTDB_PASS: '' }
 }
 export function forceColorLevel (level) {
-  return { env: { ...filteredEnv, FORCE_COLOR: level } }
+  return { env: { ...filteredEnv, ...serverEnv, FORCE_COLOR: level } }
 }

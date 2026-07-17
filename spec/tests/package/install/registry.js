@@ -1,6 +1,8 @@
 import { readFile } from 'node:fs/promises'
 import test from 'tape'
-import { run, asAdmin } from '../../../test.js'
+import { run, asAdmin, testHttpServer } from '../../../test.js'
+
+const publicRepo = `${testHttpServer}/exist/apps/public-repo`
 
 const testAppName = 'http://exist-db.org/apps/test-app'
 const testLibName = 'http://exist-db.org/apps/test-lib'
@@ -33,8 +35,13 @@ async function cleanup (t) {
 }
 
 async function isLocalRepoAvailable () {
-  const { status } = await fetch('http://localhost:8080/exist/apps/public-repo')
-  return status === 200
+  try {
+    const { status } = await fetch(publicRepo)
+    return status === 200
+  } catch (_) {
+    // connection refused — no instance (or no public-repo) on this port
+    return false
+  }
 }
 
 /**
@@ -49,9 +56,8 @@ async function installPackageToLocalRepo (t) {
     formData.append('files[]', blob, app)
     formData.append('', '\\')
 
-    // TODO: Read in localhost
     const { status } = await fetch(
-      'http://localhost:8080/exist/apps/public-repo/publish',
+      `${publicRepo}/publish`,
       {
         method: 'post',
         headers: {
@@ -122,7 +128,7 @@ test('Work with a local public registry', async function (t) {
       'install',
       'registry',
       '--registry',
-      'http://localhost:8080/exist/apps/public-repo',
+      publicRepo,
       testAppName
     ])
     st.equal(
@@ -145,7 +151,7 @@ test('Work with a local public registry', async function (t) {
           'install',
           'registry',
           '--registry',
-          'http://localhost:8080/exist/apps/public-repo',
+          publicRepo,
           testAppName
         ],
         asAdmin
@@ -173,7 +179,7 @@ test('Work with a local public registry', async function (t) {
           'install',
           'registry',
           '--registry',
-          'http://localhost:8080/exist/apps/public-repo',
+          publicRepo,
           'test-app'
         ],
         asAdmin
@@ -222,7 +228,7 @@ test('Work with a local public registry', async function (t) {
           'install',
           'registry',
           '--registry',
-          'http://localhost:8080/exist/apps/public-repo',
+          publicRepo,
           testAppName,
           '1.0.1'
         ],
@@ -248,7 +254,7 @@ test('Work with a local public registry', async function (t) {
         'install',
         'registry',
         '--registry',
-        'http://localhost:8080/exist/apps/public-repo',
+        publicRepo,
         testAppName,
         '1.0.1',
         '--force'
@@ -279,7 +285,7 @@ test('Work with a local public registry', async function (t) {
           'install',
           'registry',
           '--registry',
-          'http://localhost:8080/exist/apps/public-repo',
+          publicRepo,
           testAppName,
           '10.98.2'
         ],
@@ -308,7 +314,7 @@ test('Work with a local public registry', async function (t) {
           'install',
           'registry',
           '--registry',
-          'http://localhost:8080/doesnotexist/',
+          `${testHttpServer}/doesnotexist/`,
           testAppName
         ],
         asAdmin
@@ -319,7 +325,7 @@ test('Work with a local public registry', async function (t) {
       // @todo: maybe a better error here? Explain user what actually went wrong?
       st.equal(
         stderr,
-        '✘ http://exist-db.org/apps/test-app > Server responded with a Servlet error. Probably a wrong path to the public-repo or public-repo not installed. Please check the URL http://localhost:8080/doesnotexist/\n',
+        `✘ http://exist-db.org/apps/test-app > Server responded with a Servlet error. Probably a wrong path to the public-repo or public-repo not installed. Please check the URL ${testHttpServer}/doesnotexist/\n`,
         stderr
       )
       st.end()

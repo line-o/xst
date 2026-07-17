@@ -9,9 +9,11 @@ import { run, runPipe } from '../test.js'
 // under XST_TEST_SERVER, or the CI default otherwise). Without this the handler
 // falls back to node-exist's hardcoded default and, under isolation, floods an
 // uncaught ECONNREFUSED that crashes the suite.
-// A yargs instance must not be reused across parses: on a reused instance a
-// boolean option next to the positional (e.g. `execute --stats 1+1`) silently
-// drops the positional, so each parse gets a fresh parser.
+//
+// A yargs instance must not be reused across parse() calls: on a reused
+// instance a boolean option alongside the positional (execute --stats 1+1)
+// drops the positional, so the handler sees no query. cli.js builds one parser
+// per process, so this only ever bit the tests. Build a fresh one per parse.
 const parser = () => yargs().scriptName('xst').command(exec).middleware(readConnection).help().fail(false)
 
 const execCmd = async (cmd, args) => {
@@ -150,7 +152,7 @@ test('read query from stdin', async function (t) {
 
 test('parses stats option', async function (t) {
   const argv = await new Promise((resolve, reject) => {
-    parser.parse(['execute', '--stats', '1+1'], (err, argv, output) => {
+    parser().parse(['execute', '--stats', '1+1'], (err, argv, output) => {
       if (err) { return reject(err) }
       resolve(argv)
     })

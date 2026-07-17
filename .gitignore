@@ -13,3 +13,6 @@ node_modules
 # artifacts
 *.tgz
 coverage
+
+# implementation plans (local only)
+plans/

@@ -41,6 +41,14 @@ export const testServer = process.env.XST_TEST_SERVER || 'https://localhost:8443
 export const testHttpServer = process.env.XST_TEST_HTTP_SERVER || 'http://localhost:8080'
 const serverEnv = isIsolated ? { EXISTDB_SERVER: testServer } : {}
 
+// Some suites (spec/tests/exec.js) run command handlers in-process via the
+// yargs parser instead of spawning the CLI; those read process.env directly.
+// Inject the override into this process too, so in-process tests hit the
+// same isolated instance as spawned ones.
+if (isIsolated) {
+  process.env.EXISTDB_SERVER = testServer
+}
+
 /**
  * Run an shell command
  *

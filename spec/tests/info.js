@@ -1,5 +1,5 @@
 import { test } from 'tape'
-import { run, asAdmin } from '../test.js'
+import { run, asAdmin, testServer } from '../test.js'
 
 test("calling 'xst info'", async (t) => {
   const { stderr, stdout } = await run('xst', ['info'])
@@ -16,7 +16,7 @@ test("calling 'xst info'", async (t) => {
 test("calling 'xst info --verbose'", async (t) => {
   const { stderr, stdout } = await run('xst', ['info', '--verbose'])
   t.plan(5)
-  t.equal(stderr, 'Connecting to https://localhost:8443 as guest\n', 'connection and user output on stderr')
+  t.equal(stderr, `Connecting to ${testServer} as guest\n`, 'connection and user output on stderr')
 
   const lines = stdout.split('\n')
   t.equal(lines.length, 4, 'outputs four lines')

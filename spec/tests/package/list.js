@@ -1,5 +1,5 @@
 import { test } from 'tape'
-import { run, asAdmin } from '../../test.js'
+import { run, asAdmin, testServer } from '../../test.js'
 
 const testAppName = 'http://exist-db.org/apps/test-app'
 const testLibName = 'http://exist-db.org/apps/test-lib'
@@ -86,7 +86,7 @@ test.skip('sorts by type and installation date', async function (t) {
 
   if (stderr) { return t.fail(stderr) }
   const lines = stdout.split('\n')
-  t.equal(lines[0], 'Install test-app.xar on https://localhost:8443')
+  t.equal(lines[0], `Install test-app.xar on ${testServer}`)
 })
 
 test('with new package', async function (t) {

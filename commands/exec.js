@@ -1,5 +1,11 @@
 import { getXmlRpcClient } from '@existdb/node-exist'
 import { readFileSync } from 'node:fs'
+import { readXquery } from '../utility/xq.js'
+
+/**
+ * the timing harness executed on the DB when the stats option is set
+ */
+const statsQuery = readXquery('exec-stats.xq')
 
 /**
  * parse bindings
@@ -76,6 +82,34 @@ async function execute (db, query, variables) {
   return 0
 }
 
+/**
+ * query db wrapped in a timing harness,
+ * output result to standard out and timings to standard error
+ *
+ * The harness returns the measured times as its first result item;
+ * all following items are the results of the wrapped query and reach
+ * standard out through the exact same code path as without stats.
+ *
+ * @param {NodeExist.BoundModules} db bound NodeExist modules
+ * @param {string|Buffer} query the query to execute
+ * @param {object} [variables] the bound variables
+ * @returns {Promise<Number>} exit code
+ */
+async function executeWithStats (db, query, variables = {}) {
+  if (Object.hasOwn(variables, 'query')) {
+    throw Error('Cannot bind variable "query" when the stats option is set')
+  }
+  const result = await db.queries.readAll(statsQuery, {
+    variables: { ...variables, query: query.toString() }
+  })
+  const [stats, ...pages] = result.pages
+  const { compilation, execution } = JSON.parse(stats.toString())
+  console.log(pages.toString())
+  console.error(`compilation: ${compilation}ms`)
+  console.error(`execution:   ${execution}ms`)
+  return 0
+}
+
 export const command = ['execute [<query>] [options]', 'run', 'exec']
 export const describe = 'Execute a query string or file'
 
@@ -94,6 +128,12 @@ export async function builder (yargs) {
       coerce: parseBindings,
       default: () => {}
     })
+    .option('s', {
+      alias: 'stats',
+      type: 'boolean',
+      default: false,
+      describe: 'Print compilation and execution time of the query to standard error'
+    })
     .option('h', { alias: 'help', type: 'boolean' })
     .nargs({ f: 1, b: 1 })
     .conflicts('f', 'query')
@@ -104,9 +144,12 @@ export async function handler (argv) {
   if (argv.help) {
     return 0
   }
-  const { file, bind, query } = argv
+  const { file, bind, query, stats } = argv
   const _query = getQuery(file, query)
   const db = getXmlRpcClient(argv.connectionOptions)
 
+  if (stats) {
+    return await executeWithStats(db, _query, bind)
+  }
   return await execute(db, _query, bind)
 }

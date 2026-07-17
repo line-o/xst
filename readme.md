@@ -148,6 +148,29 @@ you can save it to a file and use the `--file` parameter.
 xst execute --file my-query.xq
 ```
 
+#### Measure query performance
+
+With `--stats` the times the server took to compile and to execute the query
+are reported in addition to the query result.
+
+```bash
+xst execute --stats 'count(//p)'
+```
+
+```
+12345
+compilation: 12ms
+execution:   340ms
+```
+
+Both timings are measured on the server, network transport is not part of the
+reported numbers. The statistics are printed to standard error while the query
+result is still printed to standard output, so piped output remains clean.
+
+```bash
+xst execute --stats 'count(//p)' > result.txt
+```
+
 #### Installation of XAR packages
 
 NOTE: The user initiating the command must be a member of the DBA group.

@@ -1,12 +1,18 @@
 import { test } from 'tape'
 import yargs from 'yargs'
 import * as exec from '../../commands/exec.js'
+import { readConnection } from '../../utility/connection.js'
 import { runPipe } from '../test.js'
 
-// a yargs instance must not be reused across parses: on a reused instance a
+// Mirror cli.js: resolve connection options from the environment so in-process
+// handlers connect to the same instance as spawned ones (the isolated server
+// under XST_TEST_SERVER, or the CI default otherwise). Without this the handler
+// falls back to node-exist's hardcoded default and, under isolation, floods an
+// uncaught ECONNREFUSED that crashes the suite.
+// A yargs instance must not be reused across parses: on a reused instance a
 // boolean option next to the positional (e.g. `execute --stats 1+1`) silently
-// drops the positional, so each parse gets a fresh parser
-const parser = () => yargs().scriptName('xst').command(exec).help().fail(false)
+// drops the positional, so each parse gets a fresh parser.
+const parser = () => yargs().scriptName('xst').command(exec).middleware(readConnection).help().fail(false)
 
 const execCmd = async (cmd, args) => {
   return await yargs()

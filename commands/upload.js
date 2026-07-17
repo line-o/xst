@@ -8,6 +8,7 @@ import { getXmlRpcClient, getMimeType } from '@existdb/node-exist'
 import { logFailure, logSuccess } from '../utility/message.js'
 import { formatErrorMessage, isNetworkError } from '../utility/errors.js'
 import { getServerUrl, getUserInfo } from '../utility/connection.js'
+import { stringList } from '../utility/options.js'
 
 /**
  * @typedef { import("../utility/account.js").AccountInfo } AccountInfo
@@ -22,15 +23,6 @@ import { getServerUrl, getUserInfo } from '../utility/connection.js'
  * @prop {Boolean} exists the collection exists
  * @prop {Boolean} created the collection was created
  */
-
-const stringList = {
-  type: 'string',
-  array: true,
-  coerce: (values) =>
-    values.length === 1 && values[0].trim() === 'false'
-      ? ['**']
-      : values.reduce((values, value) => values.concat(value.split(',').map((value) => value.trim())), [])
-}
 
 /**
  * Upload a single resource into an existdb instance

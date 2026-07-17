@@ -1,7 +1,13 @@
 import { test } from 'tape'
-import { run, asAdmin, cleanEnv } from '../test.js'
+import { run, asAdmin, cleanEnv, isIsolated } from '../test.js'
 
-test('no config file or env variables defaults to guest user', async function (t) {
+// This suite tests connection *defaults* and fixture config files, all of
+// which pin the default ports (8443/8080). When the suite is pointed at an
+// isolated instance via XST_TEST_SERVER these tests cannot pass and are
+// skipped — they still run in CI and in default local runs.
+const opts = { skip: isIsolated }
+
+test('no config file or env variables defaults to guest user', opts, async function (t) {
   const { stderr, stdout } = await run('xst', ['exec', '-f', 'modules/whoami.xq'])
   if (stderr) {
     return t.fail(stderr)
@@ -13,7 +19,7 @@ test('no config file or env variables defaults to guest user', async function (t
   t.end()
 })
 
-test('read config file', async function (t) {
+test('read config file', opts, async function (t) {
   const { stderr, stdout } = await run('xst', ['exec', '--config', 'spec/fixtures/.xstrc', '-f', 'modules/whoami.xq'])
   if (stderr) {
     return t.fail(stderr)
@@ -25,7 +31,7 @@ test('read config file', async function (t) {
   t.end()
 })
 
-test('reads environment variables', async function (t) {
+test('reads environment variables', opts, async function (t) {
   const { stderr, stdout } = await run('xst', ['exec', '-f', 'modules/whoami.xq'], asAdmin)
   if (stderr) {
     return t.fail(stderr)
@@ -37,7 +43,7 @@ test('reads environment variables', async function (t) {
   t.end()
 })
 
-test('reads configuration from .env', async function (t) {
+test('reads configuration from .env', opts, async function (t) {
   const { stderr, stdout } = await run('xst', ['exec', '--config', 'spec/fixtures/.env', '-f', 'modules/whoami.xq'])
   if (stderr) {
     return t.fail(stderr)
@@ -49,7 +55,7 @@ test('reads configuration from .env', async function (t) {
   t.end()
 })
 
-test('reads configuration from .env.staging', async function (t) {
+test('reads configuration from .env.staging', opts, async function (t) {
   const { stderr, stdout } = await run('xst', ['exec', '--config', 'spec/fixtures/.env.staging', '-f', 'modules/whoami.xq'])
   if (stderr) {
     return t.fail(stderr)
@@ -61,7 +67,7 @@ test('reads configuration from .env.staging', async function (t) {
   t.end()
 })
 
-test('reads connection from .existdb.json', async function (t) {
+test('reads connection from .existdb.json', opts, async function (t) {
   const { stderr, stdout } = await run('xst', ['exec', '--config', 'spec/fixtures/.existdb.json', '-f', 'modules/whoami.xq'])
   if (stderr) {
     return t.fail(stderr)
@@ -73,7 +79,7 @@ test('reads connection from .existdb.json', async function (t) {
   t.end()
 })
 
-test('connection options set in configuration overrides environment variables', async function (t) {
+test('connection options set in configuration overrides environment variables', opts, async function (t) {
   const { stderr, stdout } = await run('xst', ['exec', '--config', 'spec/fixtures/.env', '-f', 'modules/whoami.xq'], asAdmin)
   if (stderr) {
     return t.fail(stderr)
@@ -85,14 +91,14 @@ test('connection options set in configuration overrides environment variables', 
   t.end()
 })
 
-test('fail if config file was not found', async function (t) {
+test('fail if config file was not found', opts, async function (t) {
   const { stderr, stdout } = await run('xst', ['exec', '--config', 'non-existent.file', '-f', 'modules/whoami.xq'], asAdmin)
   if (stdout) return t.fail(stdout)
   t.ok(stderr, stderr)
   t.end()
 })
 
-test('configuration cascade', function (st) {
+test('configuration cascade', opts, function (st) {
   st.test('connection.xstrc fails to connect (certificate expired)', async function (t) {
     const { stderr, stdout } = await run('xst', ['exec', '--config', 'spec/fixtures/connection.xstrc', '-f', 'modules/whoami.xq', '--verbose'])
     const lines = stderr.split('\n')

@@ -1,5 +1,5 @@
 import { test } from 'tape'
-import { run, asAdmin } from '../test.js'
+import { run, asAdmin, testServer } from '../test.js'
 import { readdirSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
 import path from 'node:path'
@@ -172,7 +172,7 @@ test('with test collection', async (t) => {
     const { stderr, stdout } = await run('xst', ['get', '--verbose', testCollection, '.'], asAdmin)
     st.plan(9)
     const verboseLines = stderr.split('\n')
-    st.equal(verboseLines[0], 'Connecting to https://localhost:8443 as admin', verboseLines[0])
+    st.equal(verboseLines[0], `Connecting to ${testServer} as admin`, verboseLines[0])
     st.ok(verboseLines[1].startsWith('Downloading /db/get-test to'), verboseLines[1])
     st.equal(verboseLines[2], 'Downloading up to 4 resources at a time', verboseLines[2])
     st.equal(verboseLines[3], '', verboseLines[3])

@@ -51,6 +51,7 @@ function showLogo () {
 }
 
 const parser = yargs(hideBin(process.argv))
+  .scriptName('xst')
   .config('config', 'Read configuration file', configure)
   .middleware(readConnection)
   .usageConfiguration({ 'hide-types': true })

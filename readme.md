@@ -276,7 +276,25 @@ run the testsuite with
 npm test
 ```
 
-**NOTE:** You will need to have an instance of existdb running (usually a local development instance).
+**NOTE:** The test suite runs against a real eXist-db instance — either a local
+development instance you already have, or one started with the harness below.
+
+### Running a test instance
+
+The `harness/` directory has a Docker-based helper that starts an isolated
+eXist-db, points the suite at it, and cleans up afterwards — no global install,
+no port juggling, and closer to what CI does:
+
+```bash
+harness/xst-harness.sh up      # start eXist-db (existdb/existdb:release)
+harness/xst-harness.sh test    # npm test against it
+harness/xst-harness.sh down    # stop and remove it
+```
+
+It can also start a REST-disabled instance for `npm run test:norest`, run a
+version matrix, and give several isolated instances (e.g. one per git worktree)
+their own ports. See [harness/README.md](harness/README.md) for the full set of
+commands and options.
 
 ### Coverage
 
@@ -297,7 +315,8 @@ on instances where the REST API is disabled. You can run those with
 npm run test:norest
 ```
 
-**NOTE:** Keep in mind they will only run successfully against an instance that actually has REST disabled.
+**NOTE:** Keep in mind they will only run successfully against an instance that actually has REST disabled
+(`harness/xst-harness.sh up --norest` starts one).
 The [Test - No REST](.github/workflows/test-no-rest.yml) GitHub Action makes use of this.
 
 ## Contributing

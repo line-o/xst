@@ -182,12 +182,12 @@ test('with test collection', async (t) => {
 
     // files are not downloaded in reproducible order
     st.equal(
-      lines.filter((l) => /^✔︎ created directory [/\w]+\/get-test/.exec(l)).length,
+      lines.filter((l) => /^✔︎ created directory [/.\w-]+\/get-test/.exec(l)).length,
       3,
       'notify 3 directories created'
     )
     st.equal(
-      lines.filter((l) => /^✔︎ downloaded resource [/\w]+\/get-test/.exec(l)).length,
+      lines.filter((l) => /^✔︎ downloaded resource [/.\w-]+\/get-test/.exec(l)).length,
       10,
       'notify 10 resources downloaded'
     )

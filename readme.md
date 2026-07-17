@@ -24,11 +24,13 @@ Built on top of [@existdb/node-exist](https://www.npmjs.com/package/@existdb/nod
 
 ## Installation
 
-Prerequisite: [nodeJS](https://nodejs.org/) version 18 or later
+Prerequisite: [Node.js](https://nodejs.org/) 20.19 or later (Node 22.11+ for the 22.x line)
 
 `npm install --global @existdb/xst`
 
 This will put the executable `xst` in your path.
+
+**Troubleshooting:** If `xst` fails right after installation with a `SyntaxError` mentioning a missing export, your Node.js version is too old — check `node --version` against the requirement above.
 
 ### Updating
 

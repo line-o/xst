@@ -121,6 +121,55 @@ xst get /db/apps/dashboard .
 The above downloads the contents of the collection `/db/apps/dashboard` into the
 `dashboard` folder in the current working directory.
 
+#### Remove collections and resources
+
+Remove a single resource:
+
+```bash
+xst rm /db/apps/myapp/controller.xql
+```
+
+With `--include` and `--exclude` the given paths become the collections to
+search and every child whose name matches one of the comma separated glob
+patterns is removed instead. Patterns are matched against resource and
+collection names case-insensitively, `*` never crosses `/` and `**` is not
+supported (yet).
+
+Remove all JavaScript resources directly in a collection:
+
+```bash
+xst rm /db/apps/myapp --include "*.js"
+```
+
+Remove all temporary resources and collections in the entire collection tree:
+
+```bash
+xst rm --recursive --include "temp-*" /db/apps/myapp
+```
+
+Rules:
+
+- `--exclude` wins over `--include`. Using `--exclude` on its own implies
+  `--include "*"`.
+- Without `--recursive` only direct children of the given collections are
+  inspected.
+- Matches are removed deepest first. Collections that (would) still have
+  contents are skipped unless `--force` is set.
+- Protected system paths such as `/db/system` are never removed, even when a
+  pattern matches them.
+- When nothing matched, the exit code is 9.
+
+> **Warning**
+> `remove` is destructive and there is no undo! A pattern that matches more
+> than you thought — especially combined with `--recursive` and `--force` —
+> can wipe out entire collection trees. Preview every pattern removal with
+> `--dry-run` (`-d`) first: it performs the exact same traversal and lists
+> what would be removed without touching anything.
+
+```bash
+xst rm --dry-run --recursive --include "temp-*" /db/apps/myapp
+```
+
 #### Set the permission for a resource
 
 This demonstrates how you can extend the current functionality by running arbitrary

@@ -8,8 +8,8 @@
 #   xst-harness.sh down   [ID] [-v VERSION] | --all      stop instance(s)
 #   xst-harness.sh matrix [-v "6.4.1 5.4.1 4.10.0"] [-n "20 22 24"]
 #
-# ID defaults to the current worktree (digits of .worktrees/<n>) or "main".
-# Numeric IDs get deterministic ports: http 10000+ID, https 11000+ID.
+# ID defaults to the name of the current git worktree, or "main" in an ordinary
+# checkout. Numeric IDs get deterministic ports: http 10000+ID, https 11000+ID.
 # "main" uses the default ports 8080/8443 so the full suite (incl.
 # spec/tests/configuration.js) runs there. Everything else is ephemeral.
 set -euo pipefail
@@ -17,11 +17,16 @@ set -euo pipefail
 HARNESS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 COMPOSE="docker compose -f $HARNESS_DIR/compose.yaml"
 
+# In a linked worktree, git-dir points into <main>/.git/worktrees/<name> while
+# git-common-dir stays <main>/.git; they are identical in the main working tree.
+# That distinction — rather than the path shape — is what identifies a worktree,
+# so any layout works: siblings, .worktrees/<n>, or somewhere else entirely.
 detect_id () {
-  case "$PWD" in
-    */.worktrees/*) basename "$(echo "$PWD" | sed -E 's|(.*/\.worktrees/[^/]+).*|\1|')" ;;
-    *) echo main ;;
-  esac
+  if [ "$(git rev-parse --git-dir)" != "$(git rev-parse --git-common-dir)" ]; then
+    basename "$(git rev-parse --show-toplevel)"
+  else
+    echo main
+  fi
 }
 
 sanitize () { echo "$1" | tr '.' '-' | tr '[:upper:]' '[:lower:]'; }

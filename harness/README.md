@@ -59,9 +59,11 @@ node with a warning. Per-run logs land in `/tmp/xst-matrix-<exist>-<node>.log`.
 
 ## Multiple instances / git worktrees
 
-Each instance is keyed by an `ID`. Passing an explicit ID (or running from a
-`.worktrees/<n>` directory, where the ID is detected automatically) gives that
-instance its own deterministic ports, so several can run side by side:
+Each instance is keyed by an `ID`. In a git worktree the ID is detected
+automatically from the worktree's directory name — whatever layout you keep them
+in, siblings or `.worktrees/<n>` — and an ordinary checkout is `main`. Passing an
+explicit ID works too. Each ID gets its own deterministic ports, so several can
+run side by side:
 
 ```sh
 harness/xst-harness.sh up 7        # http 10007, https 11007

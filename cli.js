@@ -4,11 +4,10 @@
 // able to fail with a friendly error message (see #291). Its static import
 // graph must contain no third-party code except 'semver' (CJS, runs on
 // ancient Node.js). The actual CLI is loaded via dynamic import below.
-import { readFileSync } from 'node:fs'
+import { createRequire } from 'node:module'
 import { isSupported } from './utility/node-version.js'
 
-const { engines } = JSON.parse(
-  readFileSync(new URL('./package.json', import.meta.url)))
+const { engines } = createRequire(import.meta.url)('./package.json')
 
 if (!isSupported(process.versions.node, engines.node)) {
   console.error(

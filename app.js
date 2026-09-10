@@ -59,7 +59,7 @@ const parser = yargs(hideBin(process.argv))
   .strictCommands(true)
   .strictOptions(false)
   .help()
-  .command('$0 [<command>]', 'Interact with an eXist-db', () => {}, async (argv) => {
+  .command('$0 [<command>]', 'Interact with an eXist-db', yargs => yargs, async (argv) => {
     if (argv.command) {
       console.error(`Command "${argv.command}" not recognized.
 Try xst --help`)

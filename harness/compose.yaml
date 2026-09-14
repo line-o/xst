@@ -1,7 +1,8 @@
 # Local test harness — isolated eXist-db instances for xst development.
-# Managed by harness/xst-harness.sh, or directly:
+# Managed by harness/xst-harness.sh, or directly (from the checkout root):
 #
 #   COMPOSE_PROJECT_NAME=xst-291 EXIST_VERSION=6.4.1 HTTP_PORT=10291 HTTPS_PORT=11291 \
+#     NOREST_WEB_XML="$PWD/spec/fixtures/web-no-rest.xml" \
 #     docker compose -f harness/compose.yaml up -d --wait
 #
 # Port 0 = let docker pick a free host port (resolve with `docker compose port`).
@@ -20,7 +21,7 @@ services:
     profiles: [norest]
     image: existdb/existdb:${EXIST_VERSION:-release}
     volumes:
-      - ../spec/fixtures/web-no-rest.xml:/exist/etc/webapp/WEB-INF/web.xml:ro
+      - ${NOREST_WEB_XML:?set by xst-harness.sh}:/exist/etc/webapp/WEB-INF/web.xml:ro
     tmpfs:
       - /exist/autodeploy
     ports:

@@ -12,6 +12,10 @@ jobs:
     # Exist latest and release are in development, so failures are allowed
     # (release currently broken upstream), but valuable to log
     continue-on-error: ${{ matrix.exist-version == 'latest' || matrix.exist-version == 'release' }}
+    env:
+      # `xst package install github-release` authenticates with it: unauthenticated
+      # GitHub API requests share 60 per hour per runner IP and fail the suite
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     strategy:
       fail-fast: false
       matrix:
